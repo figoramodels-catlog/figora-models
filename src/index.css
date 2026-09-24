@@ -1,0 +1,118 @@
+/* --- MANAGED FONT IMPORTS START (do not edit manually) --- */
+/* INTERNAL USE NAME: Heading */
+@import url('https://fonts.googleapis.com/css2?family=Geist:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+/* INTERNAL USE NAME: Mono */
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+/* --- MANAGED FONT IMPORTS END --- */
+
+/* @import url() FONT IMPORTS MUST ALWAYS BE AT THE VERY TOP OF THIS FILE, ABOVE THE TAILWIND IMPORTS — DO NOT DELETE THIS COMMENT */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* CRITICAL: THE FOLLOWING TAILWIND IMPORTS MUST NEVER BE DELETED OR REORDERED — DO NOT DELETE THIS COMMENT */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* END TAILWIND IMPORTS — ALL OTHER CSS MUST GO BELOW THIS LINE */
+
+/* FIGORA MODELS — light palette (default) */
+:root {
+  --background: #ffffff;
+  --foreground: #16181a;
+  --card: #fafafa;
+  --card-foreground: #16181a;
+  --surface: #f4f4f5;
+  --image: #ededf0;
+  --popover: #ffffff;
+  --popover-foreground: #16181a;
+  --primary: #111214;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #16181a;
+  --muted: #f4f4f5;
+  --muted-foreground: #78787d;
+  --accent: #f0f0f2;
+  --accent-foreground: #16181a;
+  --destructive: #d13b30;
+  --destructive-foreground: #ffffff;
+  --success: #1f9d55;
+  --border: #e7e7ea;
+  --input: #e7e7ea;
+  --ring: #a1a1a6;
+  --glass: rgba(255, 255, 255, 0.72);
+  --sidebar: #fafafa;
+  --sidebar-foreground: #16181a;
+  --sidebar-border: #e7e7ea;
+  --radius: 1rem;
+}
+/* FIGORA MODELS — dark palette */
+:root.dark {
+  --background: #0b0b0b;
+  --foreground: #ffffff;
+  --card: #141414;
+  --card-foreground: #ffffff;
+  --surface: #181818;
+  --image: #202020;
+  --popover: #141414;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #0b0b0b;
+  --secondary: #1c1c1c;
+  --secondary-foreground: #ffffff;
+  --muted: #1c1c1c;
+  --muted-foreground: #888888;
+  --accent: #1f1f1f;
+  --accent-foreground: #ffffff;
+  --destructive: #e5534b;
+  --destructive-foreground: #0b0b0b;
+  --success: #34c759;
+  --border: #222222;
+  --input: #222222;
+  --ring: #3d3d3d;
+  --glass: rgba(11, 11, 11, 0.7);
+  --sidebar: #101010;
+  --sidebar-foreground: #ffffff;
+  --sidebar-border: #222222;
+}
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  ::selection {
+    background: var(--foreground);
+    color: var(--background);
+  }
+}
+@layer utilities {
+  .glass {
+    background-color: var(--glass);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
