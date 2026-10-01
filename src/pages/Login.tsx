@@ -92,13 +92,7 @@ export function Login() {
           </Link>
         </p>
 
-        <div className="mt-5 rounded-2xl border border-border bg-surface p-3 text-center">
-          <p className="text-[11px] leading-relaxed text-muted-foreground">
-            Demo admin: admin@figora.com / admin123
-            <br />
-            Demo customer: customer@figora.com / customer123
-          </p>
-        </div>
+
       </motion.div>
     </main>);
 

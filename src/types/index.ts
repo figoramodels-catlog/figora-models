@@ -7,7 +7,14 @@ export interface Product {
   category: string;
   description: string;
   image: string;
+  images?: string[];
+  price: number;
   available: boolean;
+}
+
+export interface Category {
+  id: string;
+  name: string;
 }
 
 export type StatusFilter = 'all' | 'available' | 'out-of-stock';

@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import type { Product } from '../types';
@@ -31,23 +30,27 @@ export function ProductCard({ product, onOpen, onAdd }: ProductCardProps) {
         aria-label={`View ${product.name}`}
         className="relative block w-full overflow-hidden bg-image focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring">
         
-        <div className="aspect-[4/5] w-full">
+        <div className="aspect-[4/5] w-full relative">
           <img
             src={product.image}
             alt={product.name}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-[400ms] ease-ios group-hover:scale-[1.03]" />
-          
         </div>
       </button>
 
-      <div className="flex flex-1 flex-col gap-2 p-3 sm:p-4">
+      <div className="flex flex-1 flex-col gap-2 p-4">
         <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
           {product.category}
         </span>
-        <h3 className="font-display text-[13px] font-semibold leading-snug tracking-[-0.01em] text-foreground sm:text-[15px]">
-          {product.name}
-        </h3>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-display text-[15px] font-bold leading-tight tracking-[-0.01em] text-foreground">
+            {product.name}
+          </h3>
+          <p className="font-mono text-[14px] font-bold text-primary">
+            LKR {(product.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+        </div>
         <p className="font-mono text-[11px] text-muted-foreground">
           {product.productId}
         </p>

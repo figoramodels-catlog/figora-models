@@ -15,18 +15,20 @@ interface ProductsContextValue {
   updateProduct: (product: Product) => void;
   deleteProduct: (id: string) => void;
   toggleAvailability: (id: string) => void;
+  reorderProducts: (newOrder: Product[]) => void;
+  updateCategoryName: (oldName: string, newName: string) => void;
 }
 
 const ProductsContext = createContext<ProductsContextValue | null>(null);
 
-const STORAGE_KEY = 'figora.products';
+const STORAGE_KEY = 'figora.products.v3';
 
 export function ProductsProvider({ children }: {children: React.ReactNode;}) {
   const [items, setItems] = useState<Product[]>(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) as Product[] : null;
-      return parsed && parsed.length ? parsed : seedProducts;
+      return parsed !== null ? parsed : seedProducts;
     } catch {
       return seedProducts;
     }
@@ -67,6 +69,18 @@ export function ProductsProvider({ children }: {children: React.ReactNode;}) {
     );
   }, []);
 
+  const reorderProducts = useCallback((newOrder: Product[]) => {
+    setItems(newOrder);
+  }, []);
+
+  const updateCategoryName = useCallback((oldName: string, newName: string) => {
+    setItems((current) =>
+      current.map((item) =>
+        item.category === oldName ? { ...item, category: newName } : item
+      )
+    );
+  }, []);
+
   return (
     <ProductsContext.Provider
       value={{
@@ -75,7 +89,9 @@ export function ProductsProvider({ children }: {children: React.ReactNode;}) {
         addProduct,
         updateProduct,
         deleteProduct,
-        toggleAvailability
+        toggleAvailability,
+        reorderProducts,
+        updateCategoryName
       }}>
       
       {children}

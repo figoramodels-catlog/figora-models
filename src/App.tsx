@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProductsProvider } from './contexts/ProductsContext';
+import { CategoriesProvider } from './contexts/CategoriesContext';
 import { CartProvider } from './contexts/CartContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { LoadingScreen } from './components/LoadingScreen';
@@ -16,6 +17,7 @@ import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminProducts } from './pages/admin/AdminProducts';
+import { AdminCategories } from './pages/admin/AdminCategories';
 
 function StoreLayout() {
   return (
@@ -49,34 +51,37 @@ export function App({
   return (
     <ThemeProvider defaultTheme={initialTheme}>
       <AuthProvider>
-        <ProductsProvider>
-          <CartProvider>
-            <ToastProvider>
-              <HashRouter>
-                <AnimatePresence>{loading && <LoadingScreen />}</AnimatePresence>
-                <Routes>
-                  <Route element={<StoreLayout />}>
-                    <Route path="/" element={<Catalogue />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="*" element={<Catalogue />} />
-                  </Route>
-                  <Route
-                    path="/admin"
-                    element={
-                    <RequireAdmin>
-                        <AdminLayout />
-                      </RequireAdmin>
-                    }>
-                    
-                    <Route index element={<AdminDashboard />} />
-                    <Route path="products" element={<AdminProducts />} />
-                  </Route>
-                </Routes>
-              </HashRouter>
-            </ToastProvider>
-          </CartProvider>
-        </ProductsProvider>
+        <CategoriesProvider>
+          <ProductsProvider>
+            <CartProvider>
+              <ToastProvider>
+                <HashRouter>
+                  <AnimatePresence>{loading && <LoadingScreen />}</AnimatePresence>
+                  <Routes>
+                    <Route element={<StoreLayout />}>
+                      <Route path="/" element={<Catalogue />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
+                      <Route path="*" element={<Catalogue />} />
+                    </Route>
+                    <Route
+                      path="/admin"
+                      element={
+                        <RequireAdmin>
+                          <AdminLayout />
+                        </RequireAdmin>
+                      }>
+
+                      <Route index element={<AdminDashboard />} />
+                      <Route path="products" element={<AdminProducts />} />
+                      <Route path="categories" element={<AdminCategories />} />
+                    </Route>
+                  </Routes>
+                </HashRouter>
+              </ToastProvider>
+            </CartProvider>
+          </ProductsProvider>
+        </CategoriesProvider>
       </AuthProvider>
     </ThemeProvider>);
 

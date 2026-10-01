@@ -1,4 +1,3 @@
-import React from 'react';
 import { useProducts } from '../../contexts/ProductsContext';
 
 export function AdminDashboard() {

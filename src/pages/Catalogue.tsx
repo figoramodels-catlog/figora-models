@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, ShoppingBag, X } from 'lucide-react';
 import { useProducts } from '../contexts/ProductsContext';
+import { useCategories } from '../contexts/CategoriesContext';
 import { useCart } from '../contexts/CartContext';
 import { useAddToCart } from '../hooks/useAddToCart';
 import { ProductCard } from '../components/ProductCard';
@@ -17,10 +18,12 @@ const filters: Array<{value: StatusFilter;label: string;}> = [
 
 export function Catalogue() {
   const { items } = useProducts();
+  const { items: categories } = useCategories();
   const { totalQuantity, openCart } = useCart();
   const addToCart = useAddToCart();
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selected, setSelected] = useState<Product | null>(null);
 
   const visible = useMemo(() => {
@@ -29,13 +32,16 @@ export function Catalogue() {
       const matchesStatus =
       status === 'all' || (
       status === 'available' ? product.available : !product.available);
+      
+      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+
       const matchesQuery =
       !needle ||
       product.productId.toLowerCase().includes(needle) ||
       product.name.toLowerCase().includes(needle);
-      return matchesStatus && matchesQuery;
+      return matchesStatus && matchesCategory && matchesQuery;
     });
-  }, [items, query, status]);
+  }, [items, query, status, selectedCategory]);
 
   return (
     <motion.main
@@ -77,6 +83,70 @@ export function Catalogue() {
               <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           }
+        </div>
+      </div>
+
+      <div className="mt-8 mb-2">
+        <h2 className="mb-4 text-[12px] font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          Categories
+        </h2>
+        <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-4 sm:mx-0 sm:px-0">
+          <button
+            type="button"
+            onClick={() => setSelectedCategory('all')}
+            className={cn(
+              "group relative flex h-[104px] min-w-[140px] shrink-0 flex-col items-start justify-end overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 ease-out active:scale-[0.97]",
+              selectedCategory === 'all'
+                ? "bg-foreground text-background shadow-lg"
+                : "border border-border bg-surface text-foreground hover:bg-accent"
+            )}
+          >
+            <span className="relative z-10 text-[15px] font-semibold tracking-tight">All Models</span>
+            <span className={cn(
+              "relative z-10 mt-1 text-[12px]",
+              selectedCategory === 'all' ? "text-background/80" : "text-muted-foreground"
+            )}>
+              Entire collection
+            </span>
+            {selectedCategory === 'all' && (
+              <motion.div
+                layoutId="activeCategory"
+                className="absolute inset-0 bg-foreground"
+                initial={false}
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
+          </button>
+          
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => setSelectedCategory(category.name)}
+              className={cn(
+                "group relative flex h-[104px] min-w-[140px] shrink-0 flex-col items-start justify-end overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 ease-out active:scale-[0.97]",
+                selectedCategory === category.name
+                  ? "bg-foreground text-background shadow-lg"
+                  : "border border-border bg-surface text-foreground hover:bg-accent"
+              )}
+            >
+              <span className="relative z-10 text-[15px] font-semibold tracking-tight">{category.name}</span>
+              <span className={cn(
+                "relative z-10 mt-1 text-[12px]",
+                selectedCategory === category.name ? "text-background/80" : "text-muted-foreground"
+              )}>
+                Explore category
+              </span>
+              {selectedCategory === category.name && (
+                <motion.div
+                  layoutId="activeCategory"
+                  className="absolute inset-0 bg-foreground"
+                  initial={false}
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+            </button>
+          ))}
         </div>
       </div>
 

@@ -22,8 +22,8 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const USERS_KEY = 'figora.users';
-const SESSION_KEY = 'figora.session';
+const USERS_KEY = 'figora.users.v3';
+const SESSION_KEY = 'figora.session.v3';
 
 const seedUsers: User[] = [
 {

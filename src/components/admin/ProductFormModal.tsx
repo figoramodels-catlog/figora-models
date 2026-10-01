@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ImagePlus } from 'lucide-react';
+import { ImagePlus, X } from 'lucide-react';
 import type { Product } from '../../types';
-import { categories } from '../../data/products';
+import { useCategories } from '../../contexts/CategoriesContext';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { TextField } from '../ui/TextField';
 import { Switch } from '../ui/Switch';
+import { Select } from '../ui/Select';
 
 interface ProductFormModalProps {
   open: boolean;
@@ -17,9 +18,11 @@ interface ProductFormModalProps {
 const emptyDraft: Omit<Product, 'id'> = {
   productId: '',
   name: '',
-  category: categories[0],
+  category: '',
   description: '',
   image: '',
+  images: [],
+  price: 0,
   available: true
 };
 
@@ -29,6 +32,7 @@ export function ProductFormModal({
   onClose,
   onSave
 }: ProductFormModalProps) {
+  const { items: categoryItems } = useCategories();
   const [draft, setDraft] = useState<Omit<Product, 'id'>>(emptyDraft);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
@@ -36,16 +40,46 @@ export function ProductFormModal({
   useEffect(() => {
     if (!open) return;
     setErrors({});
-    setDraft(product ? { ...product } : emptyDraft);
+    if (product) {
+      setDraft({ ...product, images: product.images || (product.image ? [product.image] : []) });
+    } else {
+      setDraft({ ...emptyDraft, category: categoryItems.length > 0 ? categoryItems[0].name : '' });
+    }
   }, [open, product]);
 
   const onPickImage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () =>
-    setDraft((current) => ({ ...current, image: String(reader.result) }));
-    reader.readAsDataURL(file);
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    
+    Promise.all(files.map(file => new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.readAsDataURL(file);
+    }))).then(results => {
+      setDraft(current => {
+        const newImages = [...(current.images || []), ...results];
+        return {
+          ...current,
+          image: newImages[0] || '',
+          images: newImages
+        };
+      });
+    });
+    
+    // Clear input so same files can be picked again
+    if (fileRef.current) fileRef.current.value = '';
+  };
+
+  const removeImage = (idx: number) => {
+    setDraft(current => {
+      const newImages = [...(current.images || [])];
+      newImages.splice(idx, 1);
+      return {
+        ...current,
+        image: newImages[0] || '',
+        images: newImages
+      };
+    });
   };
 
   const submit = (event: React.FormEvent) => {
@@ -53,7 +87,8 @@ export function ProductFormModal({
     const next: Record<string, string> = {};
     if (!draft.name.trim()) next.name = 'Product name is required.';
     if (!draft.productId.trim()) next.productId = 'Product ID is required.';
-    if (!draft.image) next.image = 'Add a product image.';
+    if (!draft.images || draft.images.length === 0) next.image = 'Add at least one product image.';
+    if (draft.price <= 0) next.price = 'Price must be greater than zero.';
     setErrors(next);
     if (Object.keys(next).length) return;
     onSave(
@@ -75,63 +110,63 @@ export function ProductFormModal({
       className="sm:max-w-xl">
       
       <form onSubmit={submit} className="space-y-4 p-5 sm:p-6" noValidate>
-        <div className="flex gap-4">
-          <div className="h-[130px] w-[104px] shrink-0 overflow-hidden rounded-2xl border border-border bg-image">
-            {draft.image ?
-            <img
-              src={draft.image}
-              alt="Product preview"
-              className="h-full w-full object-cover" /> :
-
-
-            <div className="grid h-full w-full place-items-center">
-                <ImagePlus
-                className="h-5 w-5 text-muted-foreground"
-                aria-hidden="true" />
-              
+        <div>
+          <label className="block text-[13px] font-medium text-muted-foreground mb-2">Product images</label>
+          <div className="flex flex-wrap gap-3">
+            {(draft.images || []).map((img, idx) => (
+              <div key={idx} className="relative h-[100px] w-[80px] shrink-0 overflow-hidden rounded-xl border border-border bg-image">
+                <img src={img} alt={`Preview ${idx + 1}`} className="h-full w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => removeImage(idx)}
+                  className="absolute top-1 right-1 grid h-5 w-5 place-items-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
               </div>
-            }
+            ))}
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="h-[100px] w-[80px] shrink-0 rounded-xl border border-dashed border-border bg-surface grid place-items-center hover:bg-accent transition-colors"
+            >
+              <ImagePlus className="h-5 w-5 text-muted-foreground" />
+            </button>
           </div>
-          <div className="flex flex-col justify-center gap-2">
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              onChange={onPickImage}
-              className="hidden" />
-            
-            <Button
-              variant="secondary"
-              onClick={() => fileRef.current?.click()}>
-              
-              Upload image
-            </Button>
-            {draft.image &&
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-              setDraft((current) => ({ ...current, image: '' }))
-              }>
-              
-                Remove
-              </Button>
-            }
-            {errors.image &&
-            <p className="text-[12px] text-destructive">{errors.image}</p>
-            }
-          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={onPickImage}
+            className="hidden"
+          />
+          {errors.image && <p className="mt-1.5 text-[12px] text-destructive">{errors.image}</p>}
         </div>
 
-        <TextField
-          label="Product name"
-          value={draft.name}
-          onChange={(event) =>
-          setDraft((current) => ({ ...current, name: event.target.value }))
-          }
-          error={errors.name}
-          placeholder="Shadow Samurai — 1/6 Scale" />
-        
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextField
+            label="Product name"
+            value={draft.name}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, name: event.target.value }))
+            }
+            error={errors.name}
+            placeholder="Shadow Samurai — 1/6 Scale"
+          />
+          <TextField
+            type="number"
+            min="0"
+            step="0.01"
+            label="Price (LKR)"
+            value={draft.price || ''}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, price: parseFloat(event.target.value) || 0 }))
+            }
+            error={errors.price}
+            placeholder="299.99"
+          />
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField
@@ -153,23 +188,17 @@ export function ProductFormModal({
               
               Category
             </label>
-            <select
+            <Select
               id="product-category"
               value={draft.category}
-              onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                category: event.target.value
-              }))
+              onChange={(val) =>
+                setDraft((current) => ({
+                  ...current,
+                  category: val
+                }))
               }
-              className="h-11 w-full rounded-xl border border-border bg-surface px-3 text-[15px] text-foreground transition-all duration-200 ease-ios focus:border-ring focus:outline-none focus:ring-[3px] focus:ring-ring/40">
-              
-              {categories.map((category) =>
-              <option key={category} value={category}>
-                  {category}
-                </option>
-              )}
-            </select>
+              options={categoryItems.map(c => ({ label: c.name, value: c.name }))}
+            />
           </div>
         </div>
 
