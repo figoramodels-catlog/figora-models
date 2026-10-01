@@ -5,7 +5,6 @@ import React, {
   useEffect,
   useState } from
 'react';
-import { products as seedProducts } from '../data/products';
 import type { Product } from '../types';
 
 interface ProductsContextValue {
@@ -28,9 +27,9 @@ export function ProductsProvider({ children }: {children: React.ReactNode;}) {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) as Product[] : null;
-      return parsed !== null ? parsed : seedProducts;
+      return parsed !== null ? parsed : [];
     } catch {
-      return seedProducts;
+      return [];
     }
   });
 
