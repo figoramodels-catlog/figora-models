@@ -24,6 +24,11 @@ function StoreLayout() {
     <div className="flex min-h-screen w-full flex-col bg-background">
       <TopNav />
       <Outlet />
+      <footer className="mt-auto border-t border-border py-4 text-center">
+        <p className="text-[12px] text-muted-foreground">
+          Developed by <a href="https://snopiz.com" target="_blank" rel="noopener noreferrer" className="font-medium hover:text-foreground hover:underline">Snopiz.com</a>
+        </p>
+      </footer>
       <CartDrawer />
     </div>);
 

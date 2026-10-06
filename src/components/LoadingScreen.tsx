@@ -43,6 +43,17 @@ export function LoadingScreen() {
       <span className="mt-5 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
         Collection
       </span>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1, delay: 0.5, ease: [0.32, 0.72, 0, 1] }}
+        className="absolute bottom-8 w-full text-center"
+      >
+        <p className="text-[12px] text-muted-foreground">
+          Developed by <a href="https://snopiz.com" target="_blank" rel="noopener noreferrer" className="font-medium hover:text-foreground hover:underline">Snopiz.com</a>
+        </p>
+      </motion.div>
     </motion.div>);
 
 }
