@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ImagePlus, X } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import type { Product } from '../../types';
 import { useCategories } from '../../contexts/CategoriesContext';
 import { Modal } from '../ui/Modal';
@@ -35,6 +36,7 @@ export function ProductFormModal({
   const { items: categoryItems } = useCategories();
   const [draft, setDraft] = useState<Omit<Product, 'id'>>(emptyDraft);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -82,8 +84,9 @@ export function ProductFormModal({
     });
   };
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (isLoading) return;
     const next: Record<string, string> = {};
     if (!draft.name.trim()) next.name = 'Product name is required.';
     if (!draft.productId.trim()) next.productId = 'Product ID is required.';
@@ -91,15 +94,42 @@ export function ProductFormModal({
     if (draft.price <= 0) next.price = 'Price must be greater than zero.';
     setErrors(next);
     if (Object.keys(next).length) return;
-    onSave(
-      {
-        ...draft,
-        name: draft.name.trim(),
-        productId: draft.productId.trim(),
-        description: draft.description.trim()
-      },
-      product?.id
-    );
+    
+    setIsLoading(true);
+    try {
+      const finalImages = await Promise.all(
+        (draft.images || []).map(async (img) => {
+          if (img.startsWith('data:')) {
+            const res = await fetch(img);
+            const blob = await res.blob();
+            const ext = blob.type.split('/')[1] || 'png';
+            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+            const { data, error } = await supabase.storage.from('product-images').upload(fileName, blob, {
+              contentType: blob.type
+            });
+            if (error) throw error;
+            return data.path;
+          }
+          return img;
+        })
+      );
+
+      await onSave(
+        {
+          ...draft,
+          name: draft.name.trim(),
+          productId: draft.productId.trim(),
+          description: draft.description.trim(),
+          image: finalImages[0] || '',
+          images: finalImages
+        },
+        product?.id
+      );
+    } catch (e: any) {
+      console.error(e);
+      setErrors({ image: e.message || 'Failed to upload images' });
+    }
+    setIsLoading(false);
   };
 
   return (
@@ -249,8 +279,8 @@ export function ProductFormModal({
             
             Cancel
           </Button>
-          <Button type="submit" size="lg" className="flex-1">
-            {product ? 'Save changes' : 'Add product'}
+          <Button type="submit" size="lg" className="flex-1" disabled={isLoading}>
+            {isLoading ? 'Saving...' : product ? 'Save changes' : 'Add product'}
           </Button>
         </div>
       </form>

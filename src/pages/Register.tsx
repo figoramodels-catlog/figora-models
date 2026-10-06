@@ -17,9 +17,11 @@ export function Register() {
     password?: string;
     form?: string;
   }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const onSubmit = (event: React.FormEvent) => {
+  const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (isLoading) return;
     const next: typeof errors = {};
     if (!fullName.trim()) next.fullName = 'Full name is required.';
     if (!email.trim()) next.email = 'Email is required.';else
@@ -30,7 +32,10 @@ export function Register() {
     setErrors(next);
     if (Object.keys(next).length) return;
 
-    const result = register(fullName, email, password);
+    setIsLoading(true);
+    const result = await register(fullName, email, password);
+    setIsLoading(false);
+    
     if (result.error) {
       setErrors({ form: result.error });
       return;
@@ -89,8 +94,8 @@ export function Register() {
             </p>
           }
 
-          <Button type="submit" size="lg" className="w-full">
-            Create Account
+          <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
 

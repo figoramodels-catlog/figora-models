@@ -1,67 +1,121 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { Category } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface CategoriesContextValue {
   items: Category[];
+  isLoading: boolean;
   getById: (id: string) => Category | undefined;
-  addCategory: (category: Omit<Category, 'id'>) => void;
-  updateCategory: (category: Category) => void;
-  deleteCategory: (id: string) => void;
-  reorderCategories: (newOrder: Category[]) => void;
+  addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
+  updateCategory: (category: Category) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
+  reorderCategories: (newOrder: Category[]) => Promise<void>;
 }
 
 const CategoriesContext = createContext<CategoriesContextValue | null>(null);
 
-const STORAGE_KEY = 'figora.categories.v2';
-
-const seedCategories: Category[] = [];
-
 export function CategoriesProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<Category[]>(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      const parsed = raw ? JSON.parse(raw) as Category[] : null;
-      return parsed !== null ? parsed : seedCategories;
-    } catch {
-      return seedCategories;
+  const [items, setItems] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchCategories = useCallback(async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('sort_order', { ascending: true });
+    
+    if (!error && data) {
+      // Map the data if necessary, assuming columns are id, name, sort_order
+      setItems(data.map(d => ({
+        id: d.id,
+        name: d.name
+      })));
+    } else if (error) {
+      console.error('Error fetching categories:', error);
     }
-  });
+    setIsLoading(false);
+  }, []);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    } catch {
-      /* storage unavailable */
-    }
-  }, [items]);
+    fetchCategories();
+  }, [fetchCategories]);
 
   const getById = useCallback(
     (id: string) => items.find((item) => item.id === id),
     [items]
   );
 
-  const addCategory = useCallback((category: Omit<Category, 'id'>) => {
-    setItems((current) => [{ ...category, id: `c-${Date.now()}` }, ...current]);
+  const addCategory = useCallback(async (category: Omit<Category, 'id'>) => {
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({
+        name: category.name,
+        sort_order: items.length
+      })
+      .select()
+      .single();
+
+    if (!error && data) {
+      setItems((current) => [...current, { id: data.id, name: data.name }]);
+    } else {
+      console.error('Error adding category:', error);
+    }
+  }, [items]);
+
+  const updateCategory = useCallback(async (category: Category) => {
+    const { error } = await supabase
+      .from('categories')
+      .update({ name: category.name })
+      .eq('id', category.id);
+      
+    if (!error) {
+      setItems((current) =>
+        current.map((item) => (item.id === category.id ? category : item))
+      );
+    } else {
+      console.error('Error updating category:', error);
+    }
   }, []);
 
-  const updateCategory = useCallback((category: Category) => {
-    setItems((current) =>
-      current.map((item) => (item.id === category.id ? category : item))
-    );
+  const deleteCategory = useCallback(async (id: string) => {
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', id);
+      
+    if (!error) {
+      setItems((current) => current.filter((item) => item.id !== id));
+    } else {
+      console.error('Error deleting category:', error);
+    }
   }, []);
 
-  const deleteCategory = useCallback((id: string) => {
-    setItems((current) => current.filter((item) => item.id !== id));
-  }, []);
-
-  const reorderCategories = useCallback((newOrder: Category[]) => {
-    setItems(newOrder);
-  }, []);
+  const reorderCategories = useCallback(async (newOrder: Category[]) => {
+    setItems(newOrder); // Optimistic update
+    
+    const updates = newOrder.map((category, index) => ({
+      id: category.id,
+      name: category.name,
+      sort_order: index
+    }));
+    
+    const { error } = await supabase
+      .from('categories')
+      .upsert(updates);
+      
+    if (error) {
+      console.error('Error reordering categories:', error);
+      // fallback
+      fetchCategories();
+    }
+  }, [fetchCategories]);
 
   return (
     <CategoriesContext.Provider
       value={{
         items,
+        isLoading,
         getById,
         addCategory,
         updateCategory,

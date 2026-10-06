@@ -3,131 +3,149 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
-  useState } from
-'react';
+  useState
+} from 'react';
 import type { Role, User } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface AuthContextValue {
   user: Omit<User, 'password'> | null;
   isAdmin: boolean;
-  signIn: (email: string, password: string) => {error?: string;};
+  isLoading: boolean;
+  signIn: (email: string, password: string) => Promise<{ error?: string }>;
   register: (
-  fullName: string,
-  email: string,
-  password: string)
-  => {error?: string;};
-  signOut: () => void;
+    fullName: string,
+    email: string,
+    password: string
+  ) => Promise<{ error?: string }>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const USERS_KEY = 'figora.users.v3';
-const SESSION_KEY = 'figora.session.v3';
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<Omit<User, 'password'> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-const seedUsers: User[] = [
-{
-  id: 'u-admin',
-  fullName: 'Figora Admin',
-  email: 'admin@figora.com',
-  password: 'admin123',
-  role: 'admin'
-},
-{
-  id: 'u-demo',
-  fullName: 'Nadeesha Perera',
-  email: 'customer@figora.com',
-  password: 'customer123',
-  role: 'customer'
-}];
+  useEffect(() => {
+    // Get current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        fetchProfile(session.user.id, session.user.email!);
+      } else {
+        setUser(null);
+        setIsLoading(false);
+      }
+    });
 
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        await fetchProfile(session.user.id, session.user.email!);
+      } else {
+        setUser(null);
+        setIsLoading(false);
+      }
+    });
 
-function read<T>(key: string, fallback: T): T {
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) as T : fallback;
-  } catch {
-    return fallback;
-  }
-}
+    return () => subscription.unsubscribe();
+  }, []);
 
-function write(key: string, value: unknown) {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-
-    /* storage unavailable */}
-}
-
-function strip(user: User): Omit<User, 'password'> {
-  const { password, ...rest } = user;
-  return rest;
-}
-
-export function AuthProvider({ children }: {children: React.ReactNode;}) {
-  const [users, setUsers] = useState<User[]>(() => read(USERS_KEY, seedUsers));
-  const [userId, setUserId] = useState<string | null>(() =>
-  read<string | null>(SESSION_KEY, null)
-  );
-
-  useEffect(() => write(USERS_KEY, users), [users]);
-  useEffect(() => write(SESSION_KEY, userId), [userId]);
-
-  const user = useMemo(() => {
-    const found = users.find((candidate) => candidate.id === userId);
-    return found ? strip(found) : null;
-  }, [users, userId]);
+  const fetchProfile = async (id: string, email: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (!error && data) {
+        setUser({
+          id,
+          email,
+          fullName: data.full_name || '',
+          role: data.role as Role || 'customer',
+        });
+      } else {
+        setUser({
+          id,
+          email,
+          fullName: '',
+          role: 'customer',
+        });
+      }
+    } catch (e) {
+      console.error('Error fetching profile:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const signIn = useCallback(
-    (email: string, password: string) => {
-      const found = users.find(
-        (candidate) =>
-        candidate.email.toLowerCase() === email.trim().toLowerCase()
-      );
-      if (!found) return { error: 'No account found for this email.' };
-      if (found.password !== password) return { error: 'Incorrect password.' };
-      setUserId(found.id);
+    async (email: string, password: string) => {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) return { error: error.message };
       return {};
     },
-    [users]
+    []
   );
 
   const register = useCallback(
-    (fullName: string, email: string, password: string) => {
-      const normalized = email.trim().toLowerCase();
-      if (users.some((candidate) => candidate.email.toLowerCase() === normalized)) {
-        return { error: 'An account with this email already exists.' };
-      }
-      const role: Role = 'customer';
-      const newUser: User = {
-        id: `u-${Date.now()}`,
-        fullName: fullName.trim(),
-        email: normalized,
+    async (fullName: string, email: string, password: string) => {
+      const { data, error } = await supabase.auth.signUp({
+        email,
         password,
-        role
-      };
-      setUsers((current) => [...current, newUser]);
-      setUserId(newUser.id);
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
+      });
+      if (error) return { error: error.message };
+      
+      // Update profile is usually handled by a database trigger on Supabase,
+      // but we fallback here if we need to insert it manually.
+      // Assuming the user's db has RLS that lets them insert their own profile 
+      // or there's a trigger. If trigger exists, we don't need to do it here.
+      if (data.user) {
+        const { error: profileError } = await supabase.from('profiles').upsert({
+          id: data.user.id,
+          full_name: fullName,
+          role: 'customer'
+        });
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+        }
+      }
+
       return {};
     },
-    [users]
+    []
   );
 
-  const signOut = useCallback(() => setUserId(null), []);
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+  }, []);
 
   return (
     <AuthContext.Provider
       value={{
         user,
         isAdmin: user?.role === 'admin',
+        isLoading,
         signIn,
         register,
-        signOut
-      }}>
-      
-      {children}
-    </AuthContext.Provider>);
-
+        signOut,
+      }}
+    >
+      {!isLoading && children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthContextValue {

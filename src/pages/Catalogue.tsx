@@ -17,8 +17,8 @@ const filters: Array<{value: StatusFilter;label: string;}> = [
 
 
 export function Catalogue() {
-  const { items } = useProducts();
-  const { items: categories } = useCategories();
+  const { items, isLoading: productsLoading } = useProducts();
+  const { items: categories, isLoading: categoriesLoading } = useCategories();
   const { totalQuantity, openCart } = useCart();
   const addToCart = useAddToCart();
   const [query, setQuery] = useState('');
@@ -177,7 +177,11 @@ export function Catalogue() {
         })}
       </div>
 
-      {visible.length === 0 ?
+      {productsLoading || categoriesLoading ? (
+        <div className="mt-16 flex justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-foreground"></div>
+        </div>
+      ) : visible.length === 0 ?
       <div className="mt-16 flex flex-col items-center gap-2 text-center">
           <p className="text-[15px] font-medium">No models found</p>
           <p className="max-w-xs text-[13px] text-muted-foreground">

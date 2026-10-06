@@ -15,9 +15,12 @@ export function Login() {
     password?: string;
     form?: string;
   }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const onSubmit = (event: React.FormEvent) => {
+  const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (isLoading) return;
+    
     const next: typeof errors = {};
     if (!email.trim()) next.email = 'Email is required.';else
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
@@ -26,7 +29,10 @@ export function Login() {
     setErrors(next);
     if (Object.keys(next).length) return;
 
-    const result = signIn(email, password);
+    setIsLoading(true);
+    const result = await signIn(email, password);
+    setIsLoading(false);
+    
     if (result.error) {
       setErrors({ form: result.error });
       return;
@@ -77,8 +83,8 @@ export function Login() {
             </p>
           }
 
-          <Button type="submit" size="lg" className="w-full">
-            Sign In
+          <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
 

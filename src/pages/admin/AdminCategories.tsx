@@ -31,16 +31,16 @@ export function AdminCategories() {
     });
   }, [items, query]);
 
-  const onSave = (draft: Omit<Category, 'id'>, id?: string) => {
+  const onSave = async (draft: Omit<Category, 'id'>, id?: string) => {
     if (id) {
       const oldCategory = items.find((c) => c.id === id);
       if (oldCategory && oldCategory.name !== draft.name) {
         updateCategoryName(oldCategory.name, draft.name);
       }
-      updateCategory({ ...draft, id });
+      await updateCategory({ ...draft, id });
       showToast('Category updated');
     } else {
-      addCategory(draft);
+      await addCategory(draft);
       showToast('Category added');
     }
     setFormOpen(false);
@@ -186,9 +186,9 @@ export function AdminCategories() {
         title="Delete category?"
         description={`${pendingDelete?.name ?? ''} will be removed. Products in this category might need to be reassigned.`}
         confirmLabel="Delete"
-        onConfirm={() => {
+        onConfirm={async () => {
           if (pendingDelete) {
-            deleteCategory(pendingDelete.id);
+            await deleteCategory(pendingDelete.id);
             showToast('Category deleted');
           }
           setPendingDelete(null);

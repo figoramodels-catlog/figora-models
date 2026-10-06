@@ -53,12 +53,12 @@ export function AdminProducts() {
     });
   }, [items, query, status, selectedCategory]);
 
-  const onSave = (draft: Omit<Product, 'id'>, id?: string) => {
+  const onSave = async (draft: Omit<Product, 'id'>, id?: string) => {
     if (id) {
-      updateProduct({ ...draft, id });
+      await updateProduct({ ...draft, id });
       showToast('Product updated');
     } else {
-      addProduct(draft);
+      await addProduct(draft);
       showToast('Product added');
     }
     setFormOpen(false);
@@ -317,9 +317,9 @@ export function AdminProducts() {
         title="Delete product?"
         description={`${pendingDelete?.name ?? ''} will be removed from the customer catalogue.`}
         confirmLabel="Delete"
-        onConfirm={() => {
+        onConfirm={async () => {
           if (pendingDelete) {
-            deleteProduct(pendingDelete.id);
+            await deleteProduct(pendingDelete.id);
             showToast('Product deleted');
           }
           setPendingDelete(null);
