@@ -62,11 +62,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
       
       if (!error && data) {
+        if (data.is_active === false) {
+          await supabase.auth.signOut();
+          setUser(null);
+          return;
+        }
         setUser({
           id,
           email,
           fullName: data.full_name || '',
           role: data.role as Role || 'customer',
+          is_active: data.is_active,
+          created_at: data.created_at
         });
       } else {
         setUser({
@@ -85,11 +92,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = useCallback(
     async (email: string, password: string) => {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       if (error) return { error: error.message };
+      
+      if (data.user) {
+        const { data: profile } = await supabase.from('profiles').select('is_active').eq('id', data.user.id).single();
+        if (profile && profile.is_active === false) {
+          await supabase.auth.signOut();
+          return { error: 'Your account has been suspended.' };
+        }
+      }
       return {};
     },
     []

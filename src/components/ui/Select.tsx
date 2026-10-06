@@ -14,9 +14,10 @@ export interface SelectProps {
   onChange: (value: string) => void;
   options: SelectOption[];
   placeholder?: string;
+  disabled?: boolean;
 }
 
-export function Select({ id, value, onChange, options, placeholder }: SelectProps) {
+export function Select({ id, value, onChange, options, placeholder, disabled }: SelectProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -37,11 +38,13 @@ export function Select({ id, value, onChange, options, placeholder }: SelectProp
       <button
         id={id}
         type="button"
+        disabled={disabled}
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
           "flex h-11 w-full items-center justify-between rounded-xl border bg-surface px-3 text-[15px] transition-all duration-200 ease-ios",
           open ? "border-ring ring-[3px] ring-ring/40" : "border-border hover:border-ring/50",
-          !selectedOption ? "text-muted-foreground" : "text-foreground"
+          !selectedOption ? "text-muted-foreground" : "text-foreground",
+          disabled && "opacity-50 cursor-not-allowed pointer-events-none"
         )}
       >
         <span className="truncate">

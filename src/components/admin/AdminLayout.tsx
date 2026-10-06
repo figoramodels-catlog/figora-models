@@ -1,14 +1,16 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Boxes, LayoutGrid, LogOut, Moon, Sun, Tags } from 'lucide-react';
+import { Boxes, LayoutGrid, LogOut, Moon, Sun, Tags, Users, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { cn } from '../../utils/cn';
 
 const navItems = [
 { to: '/admin', label: 'Dashboard', icon: LayoutGrid, end: true },
+{ to: '/admin/orders', label: 'Orders', icon: ShoppingBag, end: false },
 { to: '/admin/products', label: 'Products', icon: Boxes, end: false },
-{ to: '/admin/categories', label: 'Categories', icon: Tags, end: false }];
+{ to: '/admin/categories', label: 'Categories', icon: Tags, end: false },
+{ to: '/admin/customers', label: 'Customers', icon: Users, end: false }];
 
 
 export function AdminLayout() {

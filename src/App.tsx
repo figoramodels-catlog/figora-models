@@ -18,6 +18,9 @@ import { Register } from './pages/Register';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminProducts } from './pages/admin/AdminProducts';
 import { AdminCategories } from './pages/admin/AdminCategories';
+import { AdminCustomers } from './pages/admin/AdminCustomers';
+import { AdminOrders } from './pages/admin/AdminOrders';
+import { Account } from './pages/Account';
 
 function StoreLayout() {
   return (
@@ -67,6 +70,7 @@ export function App({
                       <Route path="/" element={<Catalogue />} />
                       <Route path="/login" element={<Login />} />
                       <Route path="/register" element={<Register />} />
+                      <Route path="/account" element={<Account />} />
                       <Route path="*" element={<Catalogue />} />
                     </Route>
                     <Route
@@ -80,6 +84,8 @@ export function App({
                       <Route index element={<AdminDashboard />} />
                       <Route path="products" element={<AdminProducts />} />
                       <Route path="categories" element={<AdminCategories />} />
+                      <Route path="customers" element={<AdminCustomers />} />
+                      <Route path="orders" element={<AdminOrders />} />
                     </Route>
                   </Routes>
                 </HashRouter>

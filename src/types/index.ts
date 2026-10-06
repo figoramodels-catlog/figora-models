@@ -27,9 +27,37 @@ export interface User {
   email: string;
   password?: string;
   role: Role;
+  is_active?: boolean;
+  created_at?: string;
 }
 
 export interface CartItem {
   productId: string;
   quantity: number;
+}
+
+export type OrderStatus = 'new' | 'contacted' | 'completed' | 'cancelled';
+
+export interface Order {
+  id: string;
+  customer_id: string;
+  reference: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone?: string;
+  total_items: number;
+  status: OrderStatus;
+  created_at: string;
+  updated_at: string;
+  items?: OrderItem[];
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  product_name: string;
+  price: number;
+  quantity: number;
+  created_at: string;
 }

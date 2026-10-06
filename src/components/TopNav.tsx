@@ -106,6 +106,13 @@ export function TopNav() {
                       </p>
                     </div>
                     <div className="my-1 h-px bg-border" />
+                    <Link
+                      to="/account"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 rounded-xl px-2.5 py-2 text-[13px] text-foreground transition-colors duration-200 hover:bg-accent">
+                      <UserIcon className="h-4 w-4" aria-hidden="true" />
+                      My Account
+                    </Link>
                     {isAdmin &&
                   <Link
                     to="/admin"
