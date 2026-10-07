@@ -19,27 +19,27 @@ export function Account() {
       navigate('/login');
       return;
     }
+
+    const fetchOrders = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*, items:order_items(*)')
+          .eq('customer_id', user.id)
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        setOrders(data as Order[]);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchOrders();
   }, [user, navigate]);
-
-  const fetchOrders = async () => {
-    if (!user) return;
-    try {
-      setIsLoading(true);
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*, items:order_items(*)')
-        .eq('customer_id', user.id)
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      setOrders(data as Order[]);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSignOut = async () => {
     await signOut();

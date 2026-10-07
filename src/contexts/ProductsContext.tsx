@@ -172,21 +172,6 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
   const reorderProducts = useCallback(async (newOrder: Product[]) => {
     setItems(newOrder);
 
-    const updates = newOrder.map((product, index) => ({
-      id: product.id,
-      product_id: product.productId,
-      name: product.name,
-      category: product.category,
-      description: product.description,
-      price: product.price,
-      available: product.available,
-      sort_order: index,
-      // preserve existing images without reconverting
-      images: undefined // Let's avoid updating images/other fields during reorder to be safe, just update sort_order. wait, upsert requires all NOT NULL fields. 
-      // Instead we can use an RPC or just update in a loop/bulk. 
-      // Supabase JS doesn't support bulk update easily without upserting all required fields. 
-    }));
-
     // Actually, upserting everything is simpler if we have all fields.
     const fullUpdates = newOrder.map((product, index) => {
       const bucketUrl = supabase.storage.from('product-images').getPublicUrl('').data.publicUrl;

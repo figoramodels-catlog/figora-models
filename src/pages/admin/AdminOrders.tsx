@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Check } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../../components/ui/Button';
@@ -26,11 +26,7 @@ export function AdminOrders() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string; status: OrderStatus } | null>(null);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -46,7 +42,11 @@ export function AdminOrders() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showToast]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const confirmStatusChange = async () => {
     if (!pendingStatusChange) return;

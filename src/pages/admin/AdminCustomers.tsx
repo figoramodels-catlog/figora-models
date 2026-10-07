@@ -36,10 +36,22 @@ export function AdminCustomers() {
       setError(null);
       const { data, error: fetchError } = await supabase
         .from('profiles')
-        .select('*, orders(count)')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
+
+      // Fetch order counts separately
+      const { data: ordersData } = await supabase
+        .from('orders')
+        .select('customer_id');
+
+      const orderCounts = (ordersData || []).reduce((acc: Record<string, number>, order) => {
+        if (order.customer_id) {
+          acc[order.customer_id] = (acc[order.customer_id] || 0) + 1;
+        }
+        return acc;
+      }, {});
 
       setCustomers(
         data.map((p) => ({
@@ -50,7 +62,7 @@ export function AdminCustomers() {
           is_active: p.is_active ?? true,
           created_at: p.created_at,
           phone: p.phone,
-          order_count: p.orders ? p.orders[0]?.count : 0
+          order_count: orderCounts[p.id] || 0
         }))
       );
     } catch (e: any) {

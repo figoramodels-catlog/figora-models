@@ -47,7 +47,7 @@ export function ProductFormModal({
     } else {
       setDraft({ ...emptyDraft, category: categoryItems.length > 0 ? categoryItems[0].name : '' });
     }
-  }, [open, product]);
+  }, [open, product, categoryItems]);
 
   const onPickImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
